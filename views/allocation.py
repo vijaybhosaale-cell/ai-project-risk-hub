@@ -130,7 +130,7 @@ def render(ctx: dict) -> None:
                 fig.add_vline(x=r["effective_capacity"], line_color="#b3261e", line_width=3, line_dash="dash",
                               annotation_text=f"{t('Capacity')} {r['effective_capacity']:.0f}h", annotation_position="top")
                 fig.update_layout(barmode="stack", title=t("Hours allocated per project vs capacity"), yaxis=dict(showticklabels=False))
-                st.plotly_chart(ui.style_fig(fig, height=230), key="ov_bar")
+                st.plotly_chart(ui.style_fig(fig, height=230, legend=False), key="ov_bar")
             with c2:
                 st.markdown("**" + t("Recommended actions") + "**")
                 recs = engine_alloc.recommendations(r)
