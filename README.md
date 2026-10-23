@@ -6,6 +6,8 @@ The **NOVATECH SERVICES** workspace is a demonstration company built from the ri
 
 **Live demo:** https://ai-project-risk-intelligence.streamlit.app/ — on the sign-in page, use the "Explore the NOVATECH demo as…" buttons (one click per role, demo workspace only), or sign in with a demo account below.
 
+**Best URL for presenting:** https://ai-project-risk-intelligence.streamlit.app/~/+/ (the app without the Streamlit Cloud frame: cleaner, and Back / Forward / Refresh behave exactly like a normal website).
+
 Every module has its own URL (e.g. `/dashboard`, `/allocation`), so the browser's **Back / Forward / Refresh** stay inside the app, and an in-app **← Back** button is shown on every page. You stay signed in after a refresh (8-hour session).
 
 ### Employee logins (demo workspace only)
