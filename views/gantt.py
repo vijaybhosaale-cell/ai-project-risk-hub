@@ -102,7 +102,7 @@ def render(ctx: dict) -> None:
                                            axref="x", ayref="y", showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=1,
                                            arrowcolor="#8a94a6", opacity=0.8)
         fig.add_vline(x=today.isoformat(), line_color="#b3261e", line_dash="dot", line_width=1.5)
-        fig.add_annotation(x=today.isoformat(), y=1.02, yref="paper", text=t("Today"), showarrow=False, font=dict(color="#b3261e", size=11))
+        fig.add_annotation(x=today.isoformat(), y=0, yref="paper", yanchor="bottom", xanchor="left", text=" " + t("Today"), showarrow=False, font=dict(color="#b3261e", size=11), bgcolor="rgba(255,255,255,0.8)")
         fig.update_layout(barmode="overlay", xaxis=dict(type="date"),
                           yaxis=dict(categoryorder="array", categoryarray=list(reversed(rows)), automargin=True),
                           title=t("Timeline · bars = tasks (dark part = progress) · red outline = overdue · dark outline = critical"))

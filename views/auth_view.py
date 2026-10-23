@@ -48,9 +48,9 @@ def render() -> None:
                 st.markdown("**🎬 " + t("Explore the NOVATECH demo (fictional data) as:") + "**")
                 demo_users = db.query("""SELECT u.* FROM users u JOIN companies c ON c.id = u.company_id
                                          WHERE c.is_demo = 1 AND u.active = 1 ORDER BY u.id""")
-                cols = st.columns(4)
+                cols = st.columns(2)
                 for i, du in enumerate(demo_users):
-                    if cols[i % 4].button(t(du["role"]), key=f"demo_{du['id']}", width="stretch"):
+                    if cols[i % 2].button(t(du["role"]), key=f"demo_{du['id']}", width="stretch"):
                         audit.log(du["company_id"], du["email"], "demo_quick_login", "user", du["id"], "one-click demo access")
                         _login(du)
                 st.caption(t("One-click access exists only for the fictional demo workspace and can be disabled with the DEMO_QUICK_LOGIN=false secret. Real company workspaces always require a password."))
