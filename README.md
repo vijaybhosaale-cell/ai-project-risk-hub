@@ -4,6 +4,31 @@ A working multi-tenant SaaS prototype for managing projects, people, multi-proje
 
 The **NOVATECH SERVICES** workspace is a demonstration company built from the risk-management case study (85 employees, 230 clients, €12M revenue, Angers / Nantes / Rennes). Company-level facts are case-study data; all people, clients, contracts, figures and signals are **fictional sample records**. Nothing in the demo is a confirmed incident.
 
+**Live demo:** https://ai-project-risk-intelligence.streamlit.app/ — on the sign-in page, use the "Explore the NOVATECH demo as…" buttons (one click per role, demo workspace only), or sign in with a demo account below.
+
+## 5-minute presentation walkthrough
+
+1. **Sign-in page** – show *Register a company* (multi-tenant SaaS), then click **Company Administrator** under "Explore the NOVATECH demo".
+2. **Getting started** – role-based path; press 🔊 *Listen* to hear the guidance (English or French).
+3. **Executive dashboard** – 16 live KPIs and 10 charts; change the *Location* filter to Rennes.
+4. **Resource allocation → Overcapacity analysis** – select **Samuel Blanc**: 35 h capacity, P01 20 h + P02 15 h + P05 10 h = 45 h → +10 h warning, affected tasks, delay exposure, recommendations. Find an alternative employee → *Request reassignment* (nothing changes until approved) → *Approvals* tab → Approve.
+5. **Risk register** – heat map; open **R2** (case-study risk, unconfirmed hypothesis) and **A-001** (raised automatically from the overcapacity, with its explanation).
+6. **Gantt chart** – project P02: milestones, dependencies, overdue/critical tasks; change a due date with a reason → risks recalculated.
+7. **Absences** – record an absence → impact on tasks and projects, alternatives, notification log.
+8. **Onboarding & training / Access (JML) / GDPR evidence** – the 25 recruits, least-privilege, leaver revocations, evidence matrix.
+9. **Switch to Français** in the sidebar, then sign out and sign in as **Employee** or **Subcontractor** to show role-based permissions.
+10. **Security notes** – what is implemented vs. what production still needs.
+
+## Known limitations (honest status)
+
+* Risk detection is rule-based; no AI/ML model is trained. `hub/ai_interface.py` is ready for one.
+* Gantt dates are edited with a form (the Plotly chart has no drag-and-drop).
+* E-mail sending needs an SMTP account and the `SMTP_PASSWORD` secret; NTFY works with the free ntfy.sh server once a topic is set in Company settings. Without configuration, notifications are logged as "Not sent".
+* Forgot-password e-mails require SMTP; otherwise the company administrator issues a one-time temporary password.
+* The Joiner-Mover-Leaver module tracks status only; it does not change accounts in external systems.
+* Streamlit Community Cloud storage is not persistent: data entered live is lost on restart and the demo is regenerated.
+* UI text is fully bilingual; demo records (task titles, client names, R1–R12 details) are mostly in English.
+
 ## Run locally (free, no paid services)
 
 ```bash
