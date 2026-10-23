@@ -15,7 +15,8 @@ COUNTRIES = ["France", "Belgium", "Germany", "Spain", "Italy", "Netherlands", "S
 
 def _login(user: dict) -> None:
     st.session_state["user"] = {"id": user["id"]}
-    token = auth.create_session(user["id"])
+    from hub import router
+    token = auth.create_session(user["id"], router.user_agent())
     st.session_state["sid"] = token
     st.session_state["cookie_action"] = ("set", token)
     st.session_state.pop("page_hist", None)

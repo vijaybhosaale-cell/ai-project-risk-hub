@@ -100,12 +100,13 @@ def current_user() -> dict | None:
     u = st.session_state.get("user")
     if not u:
         # Restore the session after a browser refresh.
-        token = None
-        try:
-            token = st.context.cookies.get("hub_sid")
-        except Exception:
-            token = None
-        restored = auth.session_user(token)
+        token = st.query_params.get("s")
+        if not token:
+            try:
+                token = st.context.cookies.get("hub_sid")
+            except Exception:
+                token = None
+        restored = auth.session_user(token, router.user_agent())
         if restored:
             st.session_state["user"] = {"id": restored["id"]}
             st.session_state["sid"] = token
@@ -134,9 +135,7 @@ def make_page(key: str, label: str, mod: str, icon: str, ctx: dict, default: boo
         top = st.columns([1, 7])
         if len(hist) > 1 and top[0].button("← " + t("Back"), key=f"back_{key}"):
             hist.pop()
-            prev = router.page(hist[-1])
-            if prev is not None:
-                st.switch_page(prev)
+            router.go(hist[-1])
         if ctx["company"]:
             ui.demo_banner(ctx["company"])
         importlib.import_module(f"views.{mod}").render(c)
@@ -196,11 +195,16 @@ def main() -> None:
             auth.end_session(st.session_state.get("sid"))
             lang = st.session_state.get("lang", "en")
             st.session_state.clear()
+            st.query_params.clear()
             st.session_state["lang"] = lang
             st.session_state["cookie_action"] = ("clear",)
             st.rerun()
         st.caption(t("Prototype v1 · rule-based risk engine (no trained AI model)"))
     cookie_script()
+    # Keep the session reference in the URL so a browser refresh keeps the user signed in.
+    sid = st.session_state.get("sid")
+    if sid and st.query_params.get("s") != sid:
+        st.query_params["s"] = sid
     current.run()
 
 

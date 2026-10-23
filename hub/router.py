@@ -20,7 +20,20 @@ def link(key: str, label: str, icon: str | None = None, where=None, **kw) -> Non
     (where or st).page_link(p, label=label, icon=icon, **kw)
 
 
+def session_params() -> dict:
+    sid = st.session_state.get("sid")
+    return {"s": sid} if sid else {}
+
+
 def go(key: str) -> None:
     p = page(key)
     if p is not None:
-        st.switch_page(p)
+        st.switch_page(p, query_params=session_params())
+
+
+def user_agent() -> str:
+    try:
+        ua = st.context.headers.get("User-Agent")
+        return ua if isinstance(ua, str) else ""
+    except Exception:
+        return ""

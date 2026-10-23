@@ -138,21 +138,26 @@ def temp_password() -> str:
 SESSION_HOURS = 8
 
 
-def create_session(user_id: int) -> str:
-    """Server-side session for 'stay signed in after refresh'. Only a hash of the token is stored."""
-    token = secrets.token_urlsafe(32)
+def _ua_hash(user_agent: str | None) -> str:
+    return hashlib.sha256((user_agent or "").encode()).hexdigest()
+
+
+def create_session(user_id: int, user_agent: str | None = None) -> str:
+    """Server-side session for 'stay signed in after refresh'. Only a hash of the token is stored,
+    and the session is bound to the browser's user agent."""
+    token = secrets.token_urlsafe(24)
     exp = (datetime.now() + timedelta(hours=SESSION_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
-    db.execute("INSERT INTO sessions (user_id, token_hash, created_at, expires_at) VALUES (?,?,?,?)",
-               (user_id, hashlib.sha256(token.encode()).hexdigest(), db.now(), exp))
+    db.execute("INSERT INTO auth_sessions (user_id, token_hash, ua_hash, created_at, expires_at) VALUES (?,?,?,?,?)",
+               (user_id, hashlib.sha256(token.encode()).hexdigest(), _ua_hash(user_agent), db.now(), exp))
     return token
 
 
-def session_user(token: str | None) -> dict | None:
+def session_user(token, user_agent: str | None = None) -> dict | None:
     if not token or not isinstance(token, str):
         return None
-    row = db.one("SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?",
+    row = db.one("SELECT * FROM auth_sessions WHERE token_hash = ? AND expires_at > ?",
                  (hashlib.sha256(token.encode()).hexdigest(), db.now()))
-    if not row:
+    if not row or row["ua_hash"] != _ua_hash(user_agent):
         return None
     user = db.one("SELECT * FROM users WHERE id = ? AND active = 1", (row["user_id"],))
     if user and user["company_id"]:
@@ -162,6 +167,6 @@ def session_user(token: str | None) -> dict | None:
     return user
 
 
-def end_session(token: str | None) -> None:
+def end_session(token) -> None:
     if token and isinstance(token, str):
-        db.execute("DELETE FROM sessions WHERE token_hash = ?", (hashlib.sha256(token.encode()).hexdigest(),))
+        db.execute("DELETE FROM auth_sessions WHERE token_hash = ?", (hashlib.sha256(token.encode()).hexdigest(),))

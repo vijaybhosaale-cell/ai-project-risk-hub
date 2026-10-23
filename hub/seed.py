@@ -771,7 +771,7 @@ def reset_demo() -> int:
         for t in db.TENANT_TABLES:
             db.execute(f"DELETE FROM {t} WHERE company_id = ?", (old,))
         db.execute("DELETE FROM reset_tokens WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)", (old,))
-        db.execute("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)", (old,))
+        db.execute("DELETE FROM auth_sessions WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)", (old,))
         db.execute("DELETE FROM users WHERE company_id = ?", (old,))
         db.execute("DELETE FROM companies WHERE id = ?", (old,))
     return seed_demo()

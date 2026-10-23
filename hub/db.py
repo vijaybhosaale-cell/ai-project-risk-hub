@@ -191,9 +191,9 @@ CREATE TABLE IF NOT EXISTS resource_requests (
     decision_note TEXT, created_at TEXT, decided_at TEXT
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
-CREATE TABLE IF NOT EXISTS sessions (
+CREATE TABLE IF NOT EXISTS auth_sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token_hash TEXT UNIQUE,
-    created_at TEXT, expires_at TEXT
+    ua_hash TEXT, created_at TEXT, expires_at TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_inbox_u ON inbox(user_id, read_at);
 CREATE INDEX IF NOT EXISTS ix_emp_c ON employees(company_id);
