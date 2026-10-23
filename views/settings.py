@@ -215,9 +215,9 @@ def wizard(ctx: dict) -> None:
         b2.button(t("Next") + " →", on_click=_nav, args=(step + 1,), key="wz_next")
 
 
-def notifications_form(ctx: dict, s: dict) -> None:
+def notifications_form(ctx: dict, s: dict, key: str = "notif") -> None:
     cid, user = ctx["cid"], ctx["user"]
-    with st.form("notif"):
+    with st.form(key):
         st.markdown("**NTFY** — " + t("free push notifications to phone or desktop (install the ntfy app and subscribe to your topic)"))
         c1, c2, c3 = st.columns([1, 2, 2])
         ne = c1.checkbox(t("Enable NTFY"), value=s["ntfy"]["enabled"])
@@ -287,7 +287,7 @@ def render(ctx: dict) -> None:
                     audit.log(cid, user["email"], "thresholds_saved", "settings", "", str(s["thresholds"]))
                     st.success(t("Saved. Workload and risks recalculated ({c} new, {u} updated, {x} cleared).", c=res["created"], u=res["updated"], x=res["cleared"]))
     with tabs[2]:
-        notifications_form(ctx, s)
+        notifications_form(ctx, s, key="notif_tab")
     with tabs[3]:
         if comp.get("is_demo"):
             st.markdown(t("Restore the NOVATECH demonstration workspace to its initial state (all changes made during a demo are lost). Demo accounts keep the same e-mails and password."))
