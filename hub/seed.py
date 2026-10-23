@@ -750,10 +750,17 @@ def ensure_platform_admin() -> None:
         auth.create_user(None, "Platform Administrator", email, password, "Platform Administrator")
 
 
+SEED_VERSION = "2"  # bump when the demo data model changes; the demo workspace is then regenerated
+
+
 def ensure_demo() -> None:
     db.init_schema()
+    current = db.scalar("SELECT value FROM meta WHERE key = 'seed_version'")
     if not db.scalar("SELECT COUNT(*) FROM companies WHERE is_demo = 1"):
         seed_demo()
+    elif current != SEED_VERSION:
+        reset_demo()
+    db.execute("INSERT OR REPLACE INTO meta (key, value) VALUES ('seed_version', ?)", (SEED_VERSION,))
     ensure_platform_admin()
 
 
@@ -764,6 +771,7 @@ def reset_demo() -> int:
         for t in db.TENANT_TABLES:
             db.execute(f"DELETE FROM {t} WHERE company_id = ?", (old,))
         db.execute("DELETE FROM reset_tokens WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)", (old,))
+        db.execute("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)", (old,))
         db.execute("DELETE FROM users WHERE company_id = ?", (old,))
         db.execute("DELETE FROM companies WHERE id = ?", (old,))
     return seed_demo()

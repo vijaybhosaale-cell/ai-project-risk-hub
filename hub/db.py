@@ -190,6 +190,7 @@ CREATE TABLE IF NOT EXISTS resource_requests (
     justification TEXT, status TEXT DEFAULT 'Pending', requested_by TEXT, decided_by TEXT,
     decision_note TEXT, created_at TEXT, decided_at TEXT
 );
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token_hash TEXT UNIQUE,
     created_at TEXT, expires_at TEXT
