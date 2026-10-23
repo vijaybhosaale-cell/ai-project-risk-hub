@@ -18,6 +18,9 @@ IMPLEMENTED = {
         "SMTP password read from a secret, never stored in the database.",
         "No automatic reassignment, deadline change, access grant or incident confirmation: a human decision is always required.",
         "Demo convenience: one-click role access is available ONLY for the fictional NOVATECH demo workspace and is logged; disable it with DEMO_QUICK_LOGIN=false.",
+        "Stay signed in after refresh: random server-side session token (only its SHA-256 hash is stored), expires after 8 hours, deleted at sign-out.",
+        "Demo employee logins (employee1-85 / pass@1-85) use deliberately simple passwords and exist ONLY in the fictional demo workspace.",
+        "Gmail App password is read from Streamlit secrets; e-mails are sent in the background and every attempt is logged.",
     ],
     "fr": [
         "Mots de passe hachés avec PBKDF2-SHA256 salé (150 000 itérations) ; aucun mot de passe en clair.",
@@ -30,6 +33,9 @@ IMPLEMENTED = {
         "Mot de passe SMTP lu depuis un secret, jamais stocké en base.",
         "Aucune réaffectation, modification d'échéance, ouverture d'accès ou confirmation d'incident automatique.",
         "Confort de démo : l'accès en un clic par rôle existe UNIQUEMENT pour l'espace fictif NOVATECH et est journalisé ; désactivable avec DEMO_QUICK_LOGIN=false.",
+        "Session conservée après actualisation : jeton aléatoire côté serveur (seul son hachage SHA-256 est stocké), expiration 8 heures, supprimé à la déconnexion.",
+        "Les identifiants salariés de démo (employee1-85 / pass@1-85) ont des mots de passe volontairement simples et n'existent QUE dans l'espace fictif.",
+        "Le mot de passe d'application Gmail est lu depuis les secrets Streamlit ; les e-mails partent en arrière-plan et chaque tentative est journalisée.",
     ],
 }
 GAPS = {
@@ -42,6 +48,7 @@ GAPS = {
         "Encryption of sensitive fields at rest, data retention rules and a GDPR data-subject request process for the platform itself.",
         "Independent penetration test, dependency scanning and a formal secure development lifecycle.",
         "Integration with real identity providers to actually disable accounts (currently status tracking only).",
+        "Session cookie set by the page script (not HttpOnly); production should issue HttpOnly cookies from an authentication service.",
     ],
     "fr": [
         "Authentification multifacteur (TOTP / SSO avec un fournisseur d'identité).",
@@ -52,6 +59,7 @@ GAPS = {
         "Chiffrement des champs sensibles, règles de conservation et processus de demandes RGPD pour la plateforme elle-même.",
         "Test d'intrusion indépendant, analyse des dépendances et cycle de développement sécurisé formalisé.",
         "Intégration avec de vrais fournisseurs d'identité pour désactiver les comptes (actuellement suivi de statut uniquement).",
+        "Cookie de session posé par le script de la page (non HttpOnly) ; en production, utiliser des cookies HttpOnly émis par un service d'authentification.",
     ],
 }
 

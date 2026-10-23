@@ -5,8 +5,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from hub import audit, db, engine_alloc, engine_risk, notify, ui
+from hub import audit, db, engine_alloc, engine_risk, events, notify, router, ui
 from hub.i18n import t, tf
+from views import resource_flow
 
 APPROVERS = {"Company Administrator", "Project Manager", "Team Leader"}
 
@@ -17,8 +18,10 @@ def request_reassignment(ctx, task: dict, to_emp: int, reason: str) -> None:
                                              "reason": reason, "status": "Pending", "requested_by": ctx["user"]["email"],
                                              "created_at": db.now()})
     audit.log(cid, ctx["user"]["email"], "reassignment_requested", "task", task["id"], f"to employee {to_emp}: {reason}")
-    notify.notify(cid, "reassignment", f"Reassignment approval needed: {task['code']}",
-                  f"{ctx['user']['name']} requested reassignment of {task['code']} ({task['title']}). Reason: {reason}")
+    to_name = (db.t_get("employees", cid, to_emp) or {}).get("name", "?")
+    events.emit(cid, "reassignment", f"Reassignment approval needed: {task['code']}",
+                f"{ctx['user']['name'].split(' (')[0]} proposes to move {task['code']} ({task['title']}) to {to_name}. Reason: {reason}",
+                roles=APPROVERS, page="allocation", exclude_user=ctx["user"]["id"])
     _ = rid
 
 
@@ -26,12 +29,19 @@ def decide(ctx, req: dict, approve: bool) -> None:
     cid = ctx["cid"]
     db.t_update("reassignments", cid, req["id"], {"status": "Approved" if approve else "Rejected",
                                                    "decided_by": ctx["user"]["email"], "decided_at": db.now()})
+    task = db.t_get("tasks", cid, req["task_id"])
     if approve:
-        task = db.t_get("tasks", cid, req["task_id"])
         db.t_update("tasks", cid, task["id"], {"assignee_id": req["to_employee"]})
         db.t_insert("task_history", cid, {"task_id": task["id"], "field": "assignee_id", "old_value": str(task["assignee_id"]),
                                           "new_value": str(req["to_employee"]), "reason": f"Approved reassignment: {req['reason']}",
                                           "user": ctx["user"]["email"], "ts": db.now()})
+        from views.tasks import task_events
+        task_events(ctx, task, {"assignee_id": req["to_employee"]}, f"Approved reassignment: {req['reason']}")
+    requester = events.employee_user_by_email(cid, req["requested_by"])
+    if requester:
+        events.emit(cid, "approval" if approve else "rejected",
+                    f"Reassignment {'approved' if approve else 'rejected'}: {task['code']}",
+                    f"Decided by {ctx['user']['name'].split(' (')[0]}.", users=[requester], page="allocation", email=False)
     audit.log(cid, ctx["user"]["email"], "reassignment_" + ("approved" if approve else "rejected"), "task", req["task_id"])
     engine_risk.run(cid)
 
@@ -167,6 +177,7 @@ def render(ctx: dict) -> None:
                                 if st.form_submit_button(t("Request reassignment (needs approval)"), type="primary"):
                                     request_reassignment(ctx, task, int(to), reason)
                                     st.success(t("Request recorded and sent for approval. Nothing has been reassigned yet."))
+                        resource_flow.render_options(ctx, task, cands.empty)
             else:
                 st.info(t("No open tasks assigned."))
 
@@ -203,6 +214,10 @@ def render(ctx: dict) -> None:
                         db.t_insert("allocations", cid, {"employee_id": sel, "project_id": add_p, "hours_per_week": add_h, "project_role": "Member"})
                         changes.append(f"added project {add_p}: {add_h}h")
                     audit.log(cid, ctx["user"]["email"], "allocation_changed", "employee", sel, "; ".join(changes))
+                    if changes:
+                        events.emit(cid, "allocation", "Your project allocation has changed",
+                                    f"Updated by {ctx['user']['name'].split(' (')[0]}: " + "; ".join(changes),
+                                    employees=[sel], page="my_work", exclude_user=ctx["user"]["id"], email=False)
                     res = engine_risk.run(cid)
                     st.success(t("Saved. Workload and risks recalculated ({c} new, {u} updated, {x} cleared).",
                                  c=res["created"], u=res["updated"], x=res["cleared"]))
@@ -210,6 +225,8 @@ def render(ctx: dict) -> None:
 
     # ---- approvals ---------------------------------------------------------------
     with tabs[3]:
+        resource_flow.render_approvals(ctx)
+        st.markdown("**" + t("Reassignment requests") + "**")
         reqs = db.df("""SELECT r.*, t.code, t.title, e1.name AS from_name, e2.name AS to_name FROM reassignments r
                         JOIN tasks t ON t.id = r.task_id LEFT JOIN employees e1 ON e1.id = r.from_employee
                         LEFT JOIN employees e2 ON e2.id = r.to_employee WHERE r.company_id = ? ORDER BY r.id DESC""", (cid,))

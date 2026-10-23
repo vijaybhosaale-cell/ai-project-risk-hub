@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
-from hub import audit, db, engine_alloc, engine_risk, notify, ui
+from hub import audit, db, engine_alloc, engine_risk, events, notify, router, ui
 from hub.i18n import t, tf
 
 TYPES = ["Planned leave", "Unexpected absence", "Training time", "Other unavailability"]
@@ -58,6 +58,7 @@ def show_impact(cid: int, absence: dict) -> None:
             names = ", ".join(f"{r['name']} ({r['spare_hours']:.0f}h {t('free')})" for _, r in c.iterrows()) if not c.empty else t("none available - consider subcontractor or new date")
             st.markdown(f"- **{tk['code']}** ({tk['required_skills'] or '-'}): {names}")
         st.caption(t("Nothing has been reassigned and no deadline has been changed. Use Resource allocation → Overcapacity analysis to request a reassignment."))
+        router.link("allocation", t("Open Resource allocation (reassign, subcontractor, hiring or deadline request)") + " →")
 
 
 def render(ctx: dict) -> None:
@@ -88,9 +89,14 @@ def render(ctx: dict) -> None:
                         a = db.t_get("absences", cid, aid)
                         im = impact(cid, a)
                         mgr = db.t_get("employees", cid, emp["manager_id"]) if emp["manager_id"] else None
-                        out = notify.notify(cid, "absence", f"Absence recorded: {emp['name']}",
-                                            f"{emp['name']} unavailable ({typ}) {sd} to {ed}. {len(im['tasks'])} task(s) affected, "
-                                            f"{im['hours_lost']}h capacity lost. Manager: {mgr['name'] if mgr else '-'}.")
+                        body = (f"{emp['name']} unavailable ({typ}) {sd} to {ed}. {len(im['tasks'])} task(s) affected, "
+                                f"{im['hours_lost']}h capacity lost. Manager: {mgr['name'] if mgr else '-'}.")
+                        events.emit(cid, "absence", f"Absence recorded: {emp['name']}", body,
+                                    employees=[emp["manager_id"]] if emp["manager_id"] else [], roles=["Project Manager"],
+                                    page="absences", exclude_user=user["id"])
+                        events.emit(cid, "absence", "Your absence has been recorded", f"{typ}: {sd} → {ed}.",
+                                    employees=[eid], page="my_work", exclude_user=user["id"], email=False)
+                        out = ["NTFY / e-mail: queued (see Notifications log)"]
                         st.session_state["last_absence"] = aid
                         st.success(t("Absence recorded. Workload and risks recalculated ({c} new, {u} updated).", c=res["created"], u=res["updated"]))
                         if out:

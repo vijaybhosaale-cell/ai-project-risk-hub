@@ -6,12 +6,31 @@ The **NOVATECH SERVICES** workspace is a demonstration company built from the ri
 
 **Live demo:** https://ai-project-risk-intelligence.streamlit.app/ — on the sign-in page, use the "Explore the NOVATECH demo as…" buttons (one click per role, demo workspace only), or sign in with a demo account below.
 
+Every module has its own URL (e.g. `/dashboard`, `/allocation`), so the browser's **Back / Forward / Refresh** stay inside the app, and an in-app **← Back** button is shown on every page. You stay signed in after a refresh (8-hour session).
+
+### Employee logins (demo workspace only)
+
+Each of the 85 demo employees has a personal login: **employee1 … employee85** with password **pass@1 … pass@85** (same number). The full list (name, department, open tasks) is on the sign-in page under "Employee logins". When a manager assigns, reassigns or re-dates a task, approves a request or records an absence, the employee sees it immediately in **🔔 Inbox** and **My work**.
+
+### E-mail through Gmail
+
+1. Google Account → **Security** → turn on **2-Step Verification**.
+2. Open https://myaccount.google.com/apppasswords → name it *Risk Hub* → **Create** → copy the 16-character password.
+3. share.streamlit.io → the app → **⋮ → Settings → Secrets**, add:
+   ```toml
+   SMTP_USER = "your.address@gmail.com"
+   SMTP_PASSWORD = "abcd efgh ijkl mnop"
+   EMAIL_TO = "your.address@gmail.com"
+   ```
+4. Save, wait for the restart, then **Notifications → Send test e-mail**.
+
 ## 5-minute presentation walkthrough
 
 1. **Sign-in page** – show *Register a company* (multi-tenant SaaS), then click **Company Administrator** under "Explore the NOVATECH demo".
 2. **Getting started** – role-based path; press 🔊 *Listen* to hear the guidance (English or French).
 3. **Executive dashboard** – 16 live KPIs and 10 charts; change the *Location* filter to Rennes.
-4. **Resource allocation → Overcapacity analysis** – select **Samuel Blanc**: 35 h capacity, P01 20 h + P02 15 h + P05 10 h = 45 h → +10 h warning, affected tasks, delay exposure, recommendations. Find an alternative employee → *Request reassignment* (nothing changes until approved) → *Approvals* tab → Approve.
+4. **Resource allocation → Overcapacity analysis** – select **Samuel Blanc**: 35 h capacity, P01 20 h + P02 15 h + P05 10 h = 45 h → +10 h warning, affected tasks, delay exposure, recommendations. Find an alternative employee → *Request reassignment* (nothing changes until approved) → *Approvals* tab → Approve. If nobody is available: **Subcontractor support**, **Hiring / extra capacity** or **Deadline change** request (approved by another manager).
+4b. Sign in as the employee who received the task (e.g. **employee2 / pass@2**) → the assignment is in **🔔 Inbox** and **My work**.
 5. **Risk register** – heat map; open **R2** (case-study risk, unconfirmed hypothesis) and **A-001** (raised automatically from the overcapacity, with its explanation).
 6. **Gantt chart** – project P02: milestones, dependencies, overdue/critical tasks; change a due date with a reason → risks recalculated.
 7. **Absences** – record an absence → impact on tasks and projects, alternatives, notification log.
@@ -23,7 +42,7 @@ The **NOVATECH SERVICES** workspace is a demonstration company built from the ri
 
 * Risk detection is rule-based; no AI/ML model is trained. `hub/ai_interface.py` is ready for one.
 * Gantt dates are edited with a form (the Plotly chart has no drag-and-drop).
-* E-mail sending needs an SMTP account and the `SMTP_PASSWORD` secret; NTFY works with the free ntfy.sh server once a topic is set in Company settings. Without configuration, notifications are logged as "Not sent".
+* E-mail sending needs the Gmail (or other SMTP) secrets above; NTFY works with the free ntfy.sh server once a topic is set in Company settings. Without configuration, e-mails are logged as "Not sent" — the in-app Inbox always works.
 * Forgot-password e-mails require SMTP; otherwise the company administrator issues a one-time temporary password.
 * The Joiner-Mover-Leaver module tracks status only; it does not change accounts in external systems.
 * Streamlit Community Cloud storage is not persistent: data entered live is lost on restart and the demo is regenerated.

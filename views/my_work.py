@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from hub import db, engine_alloc, ui
+from hub import db, engine_alloc, events, router, ui
 from hub.i18n import t, tf
 from views.tasks import STATUSES, save_task
 
@@ -34,6 +34,19 @@ def render(ctx: dict) -> None:
     else:
         st.info(t("Your account is not linked to an employee or subcontractor record. Ask your administrator."))
         return
+    inbox = db.query("SELECT * FROM inbox WHERE user_id = ? AND read_at IS NULL ORDER BY id DESC LIMIT 3", (user["id"],))
+    if inbox:
+        with st.container(border=True):
+            st.markdown("**🔔 " + t("Latest notifications") + "**")
+            for n in inbox:
+                st.markdown(f"{events.ICONS.get(n['kind'], '🔔')} **{n['title']}** — <span class='subtle'>{n['body']}</span>", unsafe_allow_html=True)
+            router.link("inbox", t("Open inbox") + " →")
+    if user.get("employee_id"):
+        al = db.df("""SELECT p.code, p.name, a.hours_per_week, a.project_role, e.name AS manager FROM allocations a
+                      JOIN projects p ON p.id = a.project_id LEFT JOIN employees e ON e.id = p.manager_id
+                      WHERE a.company_id = ? AND a.employee_id = ? AND p.archived = 0""", (cid, user["employee_id"]))
+        st.subheader(t("My projects"))
+        ui.table(al, {"code": "ID", "name": "Project", "hours_per_week": "h/week", "project_role": "Role", "manager": "Project manager"})
     tasks = db.df(f"""SELECT t.*, p.code AS project_code FROM tasks t JOIN projects p ON p.id = t.project_id
                       WHERE t.company_id = ? AND {where} ORDER BY t.due_date""", (cid, param))
     st.subheader(t("My tasks"))

@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
-from hub import audit, db, engine_risk, ui
+from hub import audit, db, engine_risk, events, ui
 from hub.i18n import t, tf
 
 STATUSES = ["Not Started", "In Progress", "Blocked", "Under Review", "Completed", "Cancelled"]
@@ -44,8 +44,47 @@ def save_task(ctx, task: dict, data: dict, reason: str) -> list[str]:
     if changed:
         db.t_update("tasks", cid, task["id"], {k: data[k] for k in changed})
         audit.log(cid, user["email"], "task_updated", "task", task["code"], ", ".join(changed) + (f" ({reason})" if reason else ""))
+        task_events(ctx, task, {k: data[k] for k in changed}, reason)
         engine_risk.run(cid)
     return changed
+
+
+def task_events(ctx, task: dict, new: dict, reason: str = "") -> None:
+    """Keep manager and employee views connected: tell the right people what changed."""
+    cid, user = ctx["cid"], ctx["user"]
+    me = user["id"]
+    label = f"{task['code']} · {task['title']}"
+    who = user["name"].split(" (")[0]
+    assignee = new.get("assignee_id", task.get("assignee_id"))
+    if "assignee_id" in new:
+        if new["assignee_id"]:
+            events.emit(cid, "assignment", f"New task assigned to you: {label}",
+                        f"Assigned by {who}. Due {new.get('due_date', task['due_date'])}. {reason}".strip(),
+                        employees=[new["assignee_id"]], page="my_work", exclude_user=me)
+        if task.get("assignee_id"):
+            events.emit(cid, "reassignment", f"Task reassigned to someone else: {label}",
+                        f"Changed by {who}. {reason}".strip(), employees=[task["assignee_id"]], page="my_work",
+                        exclude_user=me, email=False)
+    if "subcontractor_id" in new and new["subcontractor_id"]:
+        events.emit(cid, "assignment", f"Task assigned to your company: {label}", f"Assigned by {who}. {reason}".strip(),
+                    users=[u["id"] for u in db.query("SELECT id FROM users WHERE company_id=? AND subcontractor_id=?",
+                                                     (cid, new["subcontractor_id"]))], page="my_work", exclude_user=me)
+    if "due_date" in new and assignee:
+        events.emit(cid, "deadline", f"Deadline changed: {label}",
+                    f"{task['due_date']} → {new['due_date']} by {who}. Reason: {reason or '-'}",
+                    employees=[assignee], page="my_work", exclude_user=me)
+    mgr_fields = {"status", "priority", "completion", "start_date"} & set(new)
+    if mgr_fields and ctx["role"] not in ("Employee", "Subcontractor") and assignee and "assignee_id" not in new:
+        events.emit(cid, "info", f"Task updated by your manager: {label}",
+                    ", ".join(f"{f}: {new[f]}" for f in sorted(mgr_fields)), employees=[assignee], page="my_work",
+                    exclude_user=me, email=False)
+    if ctx["role"] in ("Employee", "Subcontractor") and ({"status", "completion"} & set(new)):
+        proj = db.t_get("projects", cid, task["project_id"])
+        kw = {"employees": [proj["manager_id"]]} if proj and proj["manager_id"] else {"roles": ["Project Manager"]}
+        blocked = new.get("status") == "Blocked"
+        events.emit(cid, "progress", f"{'⛔ Blocked: ' if blocked else 'Progress update: '}{label}",
+                    f"{who}: status {new.get('status', task['status'])}, {new.get('completion', task['completion'])}% complete. {reason}".strip(),
+                    page="tasks", exclude_user=me, email=blocked, **kw)
 
 
 def render(ctx: dict) -> None:
@@ -157,6 +196,10 @@ def render(ctx: dict) -> None:
                                                    "priority": prio, "status": "Not Started", "completion": 0, "required_skills": skills,
                                                    "depends_on": ",".join(str(x) for x in deps), "is_critical": int(crit)})
                         audit.log(cid, user["email"], "task_created", "task", code, title)
+                        if asg or sub:
+                            newt = db.one("SELECT * FROM tasks WHERE company_id=? AND code=?", (cid, code))
+                            task_events(ctx, {**newt, "assignee_id": None, "subcontractor_id": None},
+                                        {k: v for k, v in (("assignee_id", asg), ("subcontractor_id", sub)) if v}, "New task")
                         engine_risk.run(cid)
                         st.success(t("Task {c} created.", c=code))
     with tabs[3]:

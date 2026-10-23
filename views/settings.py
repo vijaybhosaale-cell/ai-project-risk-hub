@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import streamlit as st
 
-from hub import audit, db, engine_risk, importers, seed, ui
+from hub import audit, db, engine_risk, importers, router, seed, ui
 from hub.i18n import t, tf
 
 STEPS = ["Company profile", "Locations", "Employees", "Projects", "Clients & contracts", "Subcontractors",
@@ -20,7 +20,6 @@ def _complete(cid: int, email: str) -> None:
     db.execute("UPDATE companies SET setup_complete = 1 WHERE id = ?", (cid,))
     res = engine_risk.run(cid)
     audit.log(cid, email, "setup_completed", "company", cid, str(res))
-    st.session_state["nav"] = "dashboard"
 
 
 def wizard(ctx: dict) -> None:
@@ -209,7 +208,10 @@ def wizard(ctx: dict) -> None:
             st.markdown("**NTFY**: " + (t("enabled") if s["ntfy"]["enabled"] else t("not configured")) + " · **" + t("E-mail") + "**: " +
                         (t("enabled") if s["email"]["enabled"] else t("not configured")))
         st.caption(t("Use the step buttons above to go back and edit anything before completing."))
-        st.button("✅ " + t("Complete setup and generate the dashboard"), type="primary", on_click=_complete, args=(cid, user["email"]))
+        if st.button("✅ " + t("Complete setup and generate the dashboard"), type="primary"):
+            _complete(cid, user["email"])
+            router.go("dashboard")
+            st.rerun()
     b1, _, b2 = st.columns([1, 4, 1])
     if step > 0:
         b1.button("← " + t("Back"), on_click=_nav, args=(step - 1,), key="wz_back")

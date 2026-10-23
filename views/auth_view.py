@@ -15,7 +15,10 @@ COUNTRIES = ["France", "Belgium", "Germany", "Spain", "Italy", "Netherlands", "S
 
 def _login(user: dict) -> None:
     st.session_state["user"] = {"id": user["id"]}
-    st.session_state["nav"] = "platform" if user["role"] == "Platform Administrator" else "getting_started"
+    token = auth.create_session(user["id"])
+    st.session_state["sid"] = token
+    st.session_state["cookie_action"] = ("set", token)
+    st.session_state.pop("page_hist", None)
     if user["company_id"]:
         comp = db.company(user["company_id"])
         if comp and "lang" not in st.session_state:
@@ -35,7 +38,7 @@ def render() -> None:
 
         with tab_in:
             with st.form("login"):
-                email = st.text_input(t("E-mail"))
+                email = st.text_input(t("E-mail or username"), placeholder="employee1  /  admin@novatech-demo.example")
                 pw = st.text_input(t("Password"), type="password")
                 ok = st.form_submit_button(t("Sign in"), type="primary", width="stretch")
             if ok:
@@ -66,6 +69,19 @@ def render() -> None:
                     f"- `finance@{seed.DEMO_DOMAIN}` — {t('Finance Manager')}",
                     f"- `subcontractor@{seed.DEMO_DOMAIN}` — {t('Subcontractor')}",
                 ]))
+            with st.expander("👥 " + t("Employee logins (85 demo employees)")):
+                st.markdown(t("Each demo employee has a personal login: username **employee1** … **employee85**, password **pass@1** … **pass@85** (same number). These simple passwords exist only in the fictional demo workspace."))
+                emp_users = db.df("""SELECT u.email AS username, e.name, e.department, l.name AS location,
+                                     (SELECT COUNT(*) FROM tasks t WHERE t.assignee_id = e.id AND t.status IN ('Not Started','In Progress','Blocked','Under Review')) AS open_tasks
+                                     FROM users u JOIN employees e ON e.id = u.employee_id LEFT JOIN locations l ON l.id = e.location_id
+                                     JOIN companies c ON c.id = u.company_id
+                                     WHERE c.is_demo = 1 AND u.email LIKE 'employee%' AND u.email NOT LIKE '%@%'
+                                     ORDER BY CAST(substr(u.email, 9) AS INTEGER)""")
+                if not emp_users.empty:
+                    emp_users["password"] = "pass@" + emp_users["username"].str.replace("employee", "", regex=False)
+                    st.dataframe(emp_users[["username", "password", "name", "department", "location", "open_tasks"]].rename(columns={
+                        "username": t("Username"), "password": t("Password"), "name": t("Name"), "department": t("Department"),
+                        "location": t("Location"), "open_tasks": t("Open tasks")}), hide_index=True, height=300)
 
         with tab_reg:
             st.caption(t("Create an independent workspace for your company. You become its Company Administrator."))

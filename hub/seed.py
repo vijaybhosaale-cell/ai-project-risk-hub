@@ -196,6 +196,15 @@ def _iso(d: date) -> str:
 
 
 def seed_demo() -> int:
+    from . import notify
+    notify._MUTED["on"] = True  # no e-mails while generating the demo
+    try:
+        return _seed_demo()
+    finally:
+        notify._MUTED["on"] = False
+
+
+def _seed_demo() -> int:
     rnd = random.Random(2026)
     today = date.today()
     D = lambda days: _iso(today + timedelta(days=days))  # noqa: E731
@@ -703,6 +712,17 @@ def seed_demo() -> int:
     for nm, local, role, eid, sid in users:
         en = db.t_get("employees", cid, eid)["name"] if eid else nm
         auth.create_user(cid, f"{en} ({role})" if eid else nm, f"{local}@{DEMO_DOMAIN}", pw, role, eid, sid)
+    # One personal login per demo employee: employee1..employee85 / pass@1..pass@85 (demo workspace only).
+    for i, eid in enumerate(emp_ids, start=1):
+        e = db.t_get("employees", cid, eid)
+        uid = auth.create_user(cid, e["name"], f"employee{i}", "", "Employee", eid,
+                               pw_hash=auth.hash_password(f"pass@{i}", iterations=20_000))
+        n_open = db.scalar("SELECT COUNT(*) FROM tasks WHERE company_id=? AND assignee_id=? AND status IN ('Not Started','In Progress','Blocked','Under Review')", (cid, eid))
+        nxt = db.one("SELECT code, title, due_date FROM tasks WHERE company_id=? AND assignee_id=? AND status IN ('Not Started','In Progress','Blocked','Under Review') ORDER BY due_date LIMIT 1", (cid, eid))
+        db.execute("INSERT INTO inbox (company_id, user_id, kind, title, body, page, created_at) VALUES (?,?,?,?,?,?,?)",
+                   (cid, uid, "info", f"Welcome {e['name']}",
+                    f"You have {n_open} open task(s)." + (f" Next deadline: {nxt['code']} {nxt['title']} on {nxt['due_date']}." if nxt else ""),
+                    "my_work", db.now()))
 
     db.execute("INSERT INTO audit_log (company_id, user, action, entity, entity_id, details, ts) VALUES (?,?,?,?,?,?,?)",
                (cid, "system", "seed_demo", "company", str(cid), "Demonstration workspace created (fictional data)", db.now()))

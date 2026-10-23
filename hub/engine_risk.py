@@ -379,9 +379,15 @@ def run(cid: int, user: str = "rule-engine") -> dict:
             next_no += 1
             db.t_insert("risks", cid, data)
             created += 1
+            from . import events
             if f["probability"] * f["impact"] >= 20:
-                from . import notify
-                notify.notify(cid, "critical_risk", f"Critical risk raised: {f['title']}", f["explanation"], "high")
+                events.emit(cid, "critical_risk", f"Critical risk raised: {f['title']}", f["explanation"],
+                            roles=("Company Administrator", "Risk / Compliance Manager", "Project Manager"),
+                            page="risks", priority="high")
+            if k.startswith("overcap:") and f.get("employee_id"):
+                events.emit(cid, "overcapacity", "You are allocated above your capacity",
+                            f["explanation"] + " Your manager has been notified; please discuss priorities with them.",
+                            employees=[f["employee_id"]], page="my_work", email=False)
     for k, r in existing.items():
         if k not in seen and r["status"] in OPEN_STATUSES:
             db.t_update("risks", cid, r["id"], {"status": "Condition cleared", "updated_at": db.now()})

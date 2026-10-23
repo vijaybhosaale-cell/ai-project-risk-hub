@@ -11,12 +11,12 @@ if os.path.exists(db.DB_PATH): os.remove(db.DB_PATH)
 seed.ensure_demo()
 SKIP = {"Sign out", "↩ Sign out", "♻️ Reset demo data"}
 who = sys.argv[1] if len(sys.argv) > 1 else "admin"
-u = db.one("SELECT * FROM users WHERE email=?", (f"{who}@novatech-demo.example",))
+u = db.one("SELECT * FROM users WHERE email=?", (who if who.startswith("employee") and who[8:].isdigit() else f"{who}@novatech-demo.example",))
 only = [x for x in os.environ.get("PAGES", "").split(",") if x]
 fails = 0
 def fresh(page):
     at = AppTest.from_file("../app.py", default_timeout=90)
-    at.session_state["user"] = {"id": u["id"]}; at.session_state["nav"] = page; at.session_state["wizard_seen"] = True
+    at.session_state["user"] = {"id": u["id"]}; at.session_state["_force_page"] = page
     at.run(); return at
 for page in app_pages.keys_for(u["role"]):
     if only and page not in only: continue

@@ -49,6 +49,9 @@ h3 { font-size: 1.05rem !important; }
 .step .n { background:#1f3a5f; color:#fff; border-radius:50%; min-width:24px; height:24px; text-align:center;
            font-size:.8rem; line-height:24px; font-weight:700; }
 [data-testid="stSidebar"] { background: #f4f6f9; }
+.nav-sec { font-size: .7rem; font-weight: 700; color: #8a94a6; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 2px 4px; }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a { padding-top: 2px; padding-bottom: 2px; }
+[data-testid="stSidebar"] [data-testid="stPageLink-NavLink"] { padding-top: 3px; padding-bottom: 3px; min-height: 0; }
 [data-testid="stSidebar"] .stRadio label { font-size: .9rem; }
 div[data-testid="stMetricValue"] { font-size: 1.4rem; }
 </style>

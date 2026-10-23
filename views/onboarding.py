@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
-from hub import audit, db, engine_risk, ui
+from hub import audit, db, engine_risk, events, ui
 from hub.i18n import t, tf
 from hub.seed import ONBOARDING_STEPS
 
@@ -103,6 +103,8 @@ def render(ctx: dict) -> None:
                             db.t_update("training_assignments", cid, int(aid), {"status": ns, "completion": 100 if ns == "Completed" else 50 if ns == "In progress" else 0,
                                                                                  "score": sc or None, "completed_date": str(today) if ns == "Completed" else None})
                             audit.log(cid, user["email"], "training_updated", "employee", e["emp_code"], ns)
+                            events.emit(cid, "training", f"Training status updated: {mt.set_index('id').loc[aid, 'course']}",
+                                        f"New status: {ns}.", employees=[int(eid)], page="my_work", exclude_user=user["id"], email=False)
                             engine_risk.run(cid)
                             st.rerun()
                 st.markdown("**" + t("Access requests") + "**")
@@ -132,4 +134,7 @@ def render(ctx: dict) -> None:
                                 db.t_insert("training_assignments", cid, {"employee_id": emp["id"], "training_id": tid, "due_date": str(due), "status": "Assigned", "completion": 0})
                                 k += 1
                     audit.log(cid, user["email"], "training_created", "training", tid, f"{n}; assigned {k}")
+                    if assign and k:
+                        ids = [r["employee_id"] for r in db.t_rows("training_assignments", cid, "training_id = ?", (tid,))]
+                        events.emit(cid, "training", f"New training assigned: {n}", f"Due {due}.", employees=ids, page="my_work", email=False)
                     st.success(t("Course added and assigned to {k} employee(s).", k=k))

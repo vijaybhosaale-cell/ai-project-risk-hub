@@ -11,6 +11,12 @@ HELP = {
                "Une bordure rouge ou orange signale une valeur à surveiller ; ouvrez le module correspondant dans le menu de gauche pour agir.",
                "Les graphiques sont interactifs : survolez pour les détails, cliquez sur la légende pour masquer une série."],
     },
+    "inbox": {
+        "en": ["Your personal notifications: tasks assigned or reassigned to you, deadline changes, approvals, absences and critical risks.",
+               "Click Open to jump to the related page, or Mark read once handled.", "The same events can also be sent by e-mail when Gmail is configured."],
+        "fr": ["Vos notifications : tâches assignées ou réaffectées, changements d'échéance, approbations, absences et risques critiques.",
+               "Cliquez sur Ouvrir pour accéder à la page concernée, ou Marquer comme lu une fois traité.", "Les mêmes événements peuvent aussi être envoyés par e-mail lorsque Gmail est configuré."],
+    },
     "my_work": {
         "en": ["This page lists the tasks assigned to you.", "Select a task, set its new completion percentage and status, then click Save progress.",
                "Your training assignments are listed below with their due dates."],

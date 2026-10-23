@@ -28,10 +28,10 @@ ROLES = [
 TENANT_ROLES = ROLES[1:]
 
 
-def hash_password(password: str) -> str:
+def hash_password(password: str, iterations: int = ITERATIONS) -> str:
     salt = os.urandom(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, ITERATIONS)
-    return f"pbkdf2_sha256${ITERATIONS}${salt.hex()}${digest.hex()}"
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, iterations)
+    return f"pbkdf2_sha256${iterations}${salt.hex()}${digest.hex()}"
 
 
 def verify_password(password: str, stored: str) -> bool:
@@ -133,3 +133,35 @@ def reset_with_token(email: str, token: str, new_password: str) -> bool:
 
 def temp_password() -> str:
     return "Tmp-" + secrets.token_urlsafe(9) + "7"
+
+
+SESSION_HOURS = 8
+
+
+def create_session(user_id: int) -> str:
+    """Server-side session for 'stay signed in after refresh'. Only a hash of the token is stored."""
+    token = secrets.token_urlsafe(32)
+    exp = (datetime.now() + timedelta(hours=SESSION_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
+    db.execute("INSERT INTO sessions (user_id, token_hash, created_at, expires_at) VALUES (?,?,?,?)",
+               (user_id, hashlib.sha256(token.encode()).hexdigest(), db.now(), exp))
+    return token
+
+
+def session_user(token: str | None) -> dict | None:
+    if not token or not isinstance(token, str):
+        return None
+    row = db.one("SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?",
+                 (hashlib.sha256(token.encode()).hexdigest(), db.now()))
+    if not row:
+        return None
+    user = db.one("SELECT * FROM users WHERE id = ? AND active = 1", (row["user_id"],))
+    if user and user["company_id"]:
+        comp = db.company(user["company_id"])
+        if not comp or not comp["active"]:
+            return None
+    return user
+
+
+def end_session(token: str | None) -> None:
+    if token and isinstance(token, str):
+        db.execute("DELETE FROM sessions WHERE token_hash = ?", (hashlib.sha256(token.encode()).hexdigest(),))

@@ -142,6 +142,10 @@ def render(ctx: dict) -> None:
                         db.t_insert("task_history", cid, {"task_id": task["id"], "field": field, "old_value": task[field], "new_value": new,
                                                           "reason": reason, "user": user["email"], "ts": db.now()})
                 db.t_update("tasks", cid, task["id"], {"start_date": str(ns), "due_date": str(nd)})
+                from views.tasks import task_events
+                ch = {k: v for k, v in (("due_date", str(nd)),) if task["due_date"] != v}
+                if ch:
+                    task_events(ctx, task, ch, reason)
                 audit.log(cid, user["email"], "task_dates_changed", "task", code, f"{task['start_date']}→{ns}, {task['due_date']}→{nd}: {reason}")
                 res = engine_risk.run(cid)
                 st.success(t("Saved. Gantt and risk indicators recalculated ({c} new, {u} updated, {x} cleared).",

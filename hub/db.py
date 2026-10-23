@@ -179,6 +179,22 @@ CREATE TABLE IF NOT EXISTS audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER,
     user TEXT, action TEXT, entity TEXT, entity_id TEXT, details TEXT, ts TEXT
 );
+CREATE TABLE IF NOT EXISTS inbox (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER NOT NULL,
+    user_id INTEGER, kind TEXT, title TEXT, body TEXT, page TEXT, created_at TEXT, read_at TEXT
+);
+CREATE TABLE IF NOT EXISTS resource_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER NOT NULL,
+    kind TEXT, task_id INTEGER, project_id INTEGER, employee_id INTEGER, subcontractor_id INTEGER,
+    skills TEXT, hours_per_week REAL, start_date TEXT, end_date TEXT, new_due_date TEXT,
+    justification TEXT, status TEXT DEFAULT 'Pending', requested_by TEXT, decided_by TEXT,
+    decision_note TEXT, created_at TEXT, decided_at TEXT
+);
+CREATE TABLE IF NOT EXISTS sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token_hash TEXT UNIQUE,
+    created_at TEXT, expires_at TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_inbox_u ON inbox(user_id, read_at);
 CREATE INDEX IF NOT EXISTS ix_emp_c ON employees(company_id);
 CREATE INDEX IF NOT EXISTS ix_task_c ON tasks(company_id);
 CREATE INDEX IF NOT EXISTS ix_alloc_c ON allocations(company_id);
@@ -191,6 +207,7 @@ TENANT_TABLES = {
     "task_history", "reassignments", "absences", "budget_lines", "risks", "risk_actions",
     "trainings", "training_assignments", "onboarding_steps", "access_requests", "subcontractors",
     "compliance_evidence", "cloud_services", "digital_tools", "signals", "notifications", "audit_log",
+    "inbox", "resource_requests",
 }
 
 
@@ -309,7 +326,8 @@ DEFAULT_SETTINGS = {
     "ntfy": {"enabled": False, "server": "https://ntfy.sh", "topic": ""},
     "email": {"enabled": False, "smtp_host": "", "smtp_port": 587, "smtp_user": "",
               "sender": "", "recipients": ""},
-    "notify_on": {"absence": True, "critical_risk": True, "reassignment": True, "overcapacity": True},
+    "notify_on": {"absence": True, "critical_risk": True, "reassignment": True, "overcapacity": True,
+                  "assignment": True, "deadline": True, "resource_request": True, "approval": True},
 }
 
 

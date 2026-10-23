@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
-from hub import audit, db, engine_risk, ui
+from hub import audit, db, engine_risk, events, ui
 from hub.i18n import t, tf
 
 EVENTS = ["Joiner", "Mover", "Leaver", "Project access"]
@@ -58,6 +58,9 @@ def render(ctx: dict) -> None:
             def upd(data, action):
                 db.t_update("access_requests", cid, int(rid), data)
                 audit.log(cid, user["email"], action, "access_request", rid, str(data))
+                events.emit(cid, "access", f"Access request update: {r['system']} ({r['permission']})",
+                            f"{action.replace('access_', '').capitalize()} by {user['name'].split(' (')[0]}.",
+                            employees=[int(r["employee_id"])], page="my_work", exclude_user=user["id"], email=False)
                 engine_risk.run(cid)
                 st.rerun()
             if b[0].button("✅ " + t("Approve"), disabled=r["approval_status"] != "Pending"):

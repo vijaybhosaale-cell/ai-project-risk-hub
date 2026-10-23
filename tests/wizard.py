@@ -12,7 +12,7 @@ cid = db.execute("INSERT INTO companies (name, currency, language, setup_complet
 uid = auth.create_user(cid, "Wanda", "wanda@wiz.example", "Password1234", "Company Administrator")
 ok = lambda c, m: print(("PASS " if c else "FAIL ") + m)
 at = AppTest.from_file("../app.py", default_timeout=90); at.session_state["user"] = {"id": uid}; at.run()
-ok(at.session_state["nav"] == "settings" and not at.exception, "wizard opens first")
+ok(any("Company settings" in x.value for x in at.title) and not at.exception, "wizard opens first")
 def submit(label):
     [b for b in at.button if b.label.startswith(label)][0].click().run()
     if at.exception: print("   EXC", at.exception[0].message[:200])
@@ -36,5 +36,5 @@ ok(db.scalar("SELECT COUNT(*) FROM subcontractors WHERE company_id=?", (cid,)) =
 step(7); submit("Save and continue")
 step(8); submit("Save notification settings")
 step(9); submit("✅")
-ok(db.company(cid)["setup_complete"] == 1 and at.session_state["nav"] == "dashboard" and not at.exception, "setup completed -> dashboard")
+ok(db.company(cid)["setup_complete"] == 1 and any("dashboard" in x.value.lower() for x in at.title) and not at.exception, "setup completed -> dashboard")
 ok(db.scalar("SELECT COUNT(*) FROM employees WHERE company_id=?", (seed and cid,)) == 2 and db.scalar("SELECT COUNT(*) FROM employees WHERE company_id != ?", (cid,)) == 88, "data stays per company")

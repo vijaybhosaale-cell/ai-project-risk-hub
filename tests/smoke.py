@@ -36,6 +36,7 @@ roles = sys.argv[1:] or None
 fails = 0
 for u in db.query("SELECT * FROM users ORDER BY id"):
     if roles and u["email"].split("@")[0] not in roles: continue
+    if u["email"].startswith("employee") and "@" not in u["email"] and u["email"] not in ("employee1", "employee13"): continue
     for lang in ("en", "fr"):
         at = AppTest.from_file("../app.py", default_timeout=60)
         at.session_state["user"] = {"id": u["id"]}
@@ -48,7 +49,7 @@ for u in db.query("SELECT * FROM users ORDER BY id"):
             at = AppTest.from_file("../app.py", default_timeout=60)
             at.session_state["user"] = {"id": u["id"]}
             at.session_state["lang"] = lang
-            at.session_state["nav"] = p
+            at.session_state["_force_page"] = p
             at.session_state["wizard_seen"] = True
             t1 = time.time(); at.run()
             dt = time.time() - t1
