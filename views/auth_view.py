@@ -50,7 +50,8 @@ def render() -> None:
             if seed.quick_demo_enabled():
                 st.markdown("**🎬 " + t("Explore the NOVATECH demo (fictional data) as:") + "**")
                 demo_users = db.query("""SELECT u.* FROM users u JOIN companies c ON c.id = u.company_id
-                                         WHERE c.is_demo = 1 AND u.active = 1 ORDER BY u.id""")
+                                         WHERE c.is_demo = 1 AND u.active = 1 AND u.email LIKE ? ORDER BY u.id""",
+                                      (f"%@{seed.DEMO_DOMAIN}",))
                 cols = st.columns(2)
                 for i, du in enumerate(demo_users):
                     if cols[i % 2].button(t(du["role"]), key=f"demo_{du['id']}", width="stretch"):
