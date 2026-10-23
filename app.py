@@ -134,8 +134,7 @@ def make_page(key: str, label: str, mod: str, icon: str, ctx: dict, default: boo
             hist.append(key)
             del hist[:-30]
         c = dict(ctx, page=key, can_edit=perms.can_edit(ctx["role"], key))
-        top = st.columns([1, 7])
-        if len(hist) > 1 and top[0].button("← " + t("Back"), key=f"back_{key}"):
+        if len(hist) > 1 and st.button("← " + t("Back"), key=f"back_{key}"):
             hist.pop()
             router.go(hist[-1])
         if ctx["company"]:
