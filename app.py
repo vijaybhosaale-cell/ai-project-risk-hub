@@ -8,6 +8,7 @@ Back / Forward / Refresh buttons stay inside the app. A server-side session
 """
 from __future__ import annotations
 
+import hashlib
 import importlib
 import json
 
@@ -22,12 +23,13 @@ from hub.i18n import LANGS, t  # noqa: E402
 
 
 @st.cache_resource(show_spinner="Preparing workspace…")
-def _bootstrap() -> bool:
+def _bootstrap(version: str) -> bool:
     seed.ensure_demo()  # creates schema and re-creates the NOVATECH demo workspace if the DB is empty
     return True
 
 
-_bootstrap()
+# Re-run the bootstrap whenever the schema or the demo data version changes (e.g. after a redeploy).
+_bootstrap(hashlib.md5(db.SCHEMA.encode()).hexdigest() + seed.SEED_VERSION)
 ui.inject_css()
 
 SECTIONS = [  # (section label, [(page key, label, module, icon)])
