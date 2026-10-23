@@ -16,6 +16,13 @@ def _nav(n: int) -> None:
     st.session_state["wiz_step"] = max(0, min(len(STEPS) - 1, n))
 
 
+def _complete(cid: int, email: str) -> None:
+    db.execute("UPDATE companies SET setup_complete = 1 WHERE id = ?", (cid,))
+    res = engine_risk.run(cid)
+    audit.log(cid, email, "setup_completed", "company", cid, str(res))
+    st.session_state["nav"] = "dashboard"
+
+
 def wizard(ctx: dict) -> None:
     cid, user = ctx["cid"], ctx["user"]
     comp = db.company(cid)
@@ -202,12 +209,7 @@ def wizard(ctx: dict) -> None:
             st.markdown("**NTFY**: " + (t("enabled") if s["ntfy"]["enabled"] else t("not configured")) + " · **" + t("E-mail") + "**: " +
                         (t("enabled") if s["email"]["enabled"] else t("not configured")))
         st.caption(t("Use the step buttons above to go back and edit anything before completing."))
-        if st.button("✅ " + t("Complete setup and generate the dashboard"), type="primary"):
-            db.execute("UPDATE companies SET setup_complete = 1 WHERE id = ?", (cid,))
-            res = engine_risk.run(cid)
-            audit.log(cid, user["email"], "setup_completed", "company", cid, str(res))
-            st.session_state["nav"] = "dashboard"
-            st.rerun()
+        st.button("✅ " + t("Complete setup and generate the dashboard"), type="primary", on_click=_complete, args=(cid, user["email"]))
     b1, _, b2 = st.columns([1, 4, 1])
     if step > 0:
         b1.button("← " + t("Back"), on_click=_nav, args=(step - 1,), key="wz_back")
