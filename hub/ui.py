@@ -27,7 +27,7 @@ CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 html, body, [class*="css"], .stMarkdown, .stText, button, input, textarea, select { font-family: 'Inter', system-ui, sans-serif; }
-.block-container { padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1400px; }
+.block-container { padding-top: 3.2rem; padding-bottom: 3rem; max-width: 1400px; }
 h1, h2, h3 { letter-spacing: -0.01em; color: #1b2a3d; }
 h1 { font-size: 1.65rem !important; font-weight: 700 !important; }
 h2 { font-size: 1.25rem !important; }
@@ -36,7 +36,7 @@ h3 { font-size: 1.05rem !important; }
        box-shadow: 0 1px 2px rgba(16,24,40,.04); }
 .kpi .lbl { font-size: .74rem; color: #5b6676; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
 .kpi .val { font-size: 1.6rem; font-weight: 700; color: #1b2a3d; line-height: 1.25; margin-top: 4px; }
-.kpi .sub { font-size: .76rem; color: #6b7686; margin-top: 2px; }
+.kpi .sub { font-size: .76rem; color: #6b7686; margin-top: 2px; min-height: 1.15em; }
 .kpi.bad { border-left: 4px solid #b3261e; } .kpi.warn { border-left: 4px solid #e06c1f; }
 .kpi.good { border-left: 4px solid #3a9a68; } .kpi.neutral { border-left: 4px solid #2e6fb5; }
 .pill { display:inline-block; padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; color: #fff; }

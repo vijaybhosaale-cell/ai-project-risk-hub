@@ -103,7 +103,7 @@ def main() -> None:
         st.markdown(f"### 🛡️ {t('Risk Intelligence Hub')}")
         if company:
             st.markdown(f"**{company['name']}**")
-        st.caption(f"{user['name']} · {t(role)}")
+        st.caption(f"{user['name'].split(' (')[0]} · {t(role)}")
         language_switch(st.sidebar)
         pages = allowed_pages(role)
         keys = [p[0] for p in pages]

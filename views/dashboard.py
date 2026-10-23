@@ -114,8 +114,8 @@ def render(ctx: dict) -> None:
             g["pct"] = (g["done"] / g["total"] * 100).round(0)
             fig = px.bar(g, x="project_code", y="pct", text="pct", title=t("Task completion % by project"),
                          labels={"project_code": "", "pct": "%"})
-            fig.update_traces(marker_color=ui.ACCENT, texttemplate="%{text:.0f}%")
-            fig.update_yaxes(range=[0, 105])
+            fig.update_traces(marker_color=ui.ACCENT, texttemplate="%{text:.0f}%", textposition="outside", textangle=0, cliponaxis=False)
+            fig.update_yaxes(range=[0, 115])
             st.plotly_chart(ui.style_fig(fig, legend=False), key="d_taskpct")
 
     c3, c4 = st.columns(2)
@@ -129,15 +129,14 @@ def render(ctx: dict) -> None:
             st.plotly_chart(ui.style_fig(fig, legend=False), key="d_wl")
     with c4:
         if not wl.empty:
-            g = wl.groupby("location").agg(avg=("utilisation", "mean"), over=("band", lambda x: (x == "Overcapacity").sum()),
-                                           n=("employee_id", "count")).reset_index()
-            fig = go.Figure()
-            fig.add_bar(x=g["location"], y=g["avg"].round(0), name=t("Average workload %"), marker_color=ui.ACCENT,
-                        text=g["avg"].round(0), texttemplate="%{text:.0f}%")
-            fig.add_scatter(x=g["location"], y=g["over"], name=t("Employees over capacity"), mode="markers+text",
-                            text=g["over"], textposition="top center", marker=dict(size=14, color="#b3261e"), yaxis="y2")
-            fig.update_layout(title=t("Workload by location"), yaxis=dict(title="%"),
-                              yaxis2=dict(overlaying="y", side="right", showgrid=False, title=t("Over capacity")))
+            order = ["Underutilised", "Healthy", "High", "Overcapacity"]
+            g = wl.groupby(["location", "band"]).size().reset_index(name="n")
+            avg = wl.groupby("location")["utilisation"].mean().round(0)
+            g["loc"] = g["location"].map(lambda l: f"{l}<br><sub>{t('avg')} {avg[l]:.0f}%</sub>")
+            fig = px.bar(g, x="loc", y="n", color="band", color_discrete_map=ui.BAND_COLORS, text="n",
+                         category_orders={"band": order}, title=t("Workload by location"), labels={"loc": "", "n": t("Employees")})
+            fig.for_each_trace(lambda tr_: tr_.update(name=tf(tr_.name)))
+            fig.update_traces(textposition="inside")
             st.plotly_chart(ui.style_fig(fig), key="d_loc")
 
     c5, c6 = st.columns(2)
@@ -158,8 +157,8 @@ def render(ctx: dict) -> None:
                          title=t("Project progress (weighted by estimated hours)"), labels={"code": "", "progress": "%"},
                          hover_data={"name": True, "health_reasons": True})
             fig.for_each_trace(lambda tr_: tr_.update(name=tf(tr_.name)))
-            fig.update_traces(texttemplate="%{text:.0f}%")
-            fig.update_xaxes(range=[0, 105])
+            fig.update_traces(texttemplate="%{text:.0f}%", textposition="outside", cliponaxis=False)
+            fig.update_xaxes(range=[0, 112])
             st.plotly_chart(ui.style_fig(fig), key="d_prog")
 
     c7, c8 = st.columns(2)
@@ -179,8 +178,8 @@ def render(ctx: dict) -> None:
             g = ta.groupby("name").agg(rate=("status", lambda x: (x == "Completed").mean() * 100)).reset_index().sort_values("rate")
             fig = px.bar(g, y="name", x="rate", orientation="h", text="rate", title=t("Training completion by course"),
                          labels={"name": "", "rate": "%"})
-            fig.update_traces(marker_color=ui.ACCENT, texttemplate="%{text:.0f}%")
-            fig.update_xaxes(range=[0, 105])
+            fig.update_traces(marker_color=ui.ACCENT, texttemplate="%{text:.0f}%", textposition="outside", cliponaxis=False)
+            fig.update_xaxes(range=[0, 112])
             st.plotly_chart(ui.style_fig(fig, legend=False), key="d_train")
 
     c9, c10 = st.columns(2)

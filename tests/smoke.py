@@ -45,7 +45,11 @@ for u in db.query("SELECT * FROM users ORDER BY id"):
         only = [x for x in os.environ.get("PAGES", "").split(",") if x]
         for p in app_pages.keys_for(u["role"]):
             if only and p not in only: continue
+            at = AppTest.from_file("../app.py", default_timeout=60)
+            at.session_state["user"] = {"id": u["id"]}
+            at.session_state["lang"] = lang
             at.session_state["nav"] = p
+            at.session_state["wizard_seen"] = True
             t1 = time.time(); at.run()
             dt = time.time() - t1
             if at.exception:
