@@ -1,0 +1,1 @@
+FR: dict[str, str] = {}
