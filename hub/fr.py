@@ -506,4 +506,7 @@ FR: dict[str, str] = {
     "User created. One-time temporary password (shown once, share it securely):": "Utilisateur créé. Mot de passe temporaire (affiché une seule fois, à transmettre de façon sécurisée) :",
     "Temporary password (shown once):": "Mot de passe temporaire (affiché une seule fois) :", "Change role": "Changer le rôle", "Deactivate": "Désactiver",
     "Role changed.": "Rôle modifié.", "Active ": "Actif",
+    "Explore the NOVATECH demo (fictional data) as:": "Explorer la démo NOVATECH (données fictives) en tant que :",
+    "One-click access exists only for the fictional demo workspace and can be disabled with the DEMO_QUICK_LOGIN=false secret. Real company workspaces always require a password.":
+        "L'accès en un clic existe uniquement pour l'espace de démonstration fictif et peut être désactivé avec le secret DEMO_QUICK_LOGIN=false. Les espaces réels exigent toujours un mot de passe.",
 }

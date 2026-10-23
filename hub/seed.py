@@ -178,6 +178,19 @@ def demo_password() -> str:
     return os.environ.get("DEMO_PASSWORD", DEFAULT_DEMO_PASSWORD)
 
 
+def quick_demo_enabled() -> bool:
+    """One-click access to the fictional demo workspace (presentation convenience). Disable with DEMO_QUICK_LOGIN=false."""
+    val = ""
+    try:
+        import streamlit as st
+        if "DEMO_QUICK_LOGIN" in st.secrets:
+            val = str(st.secrets["DEMO_QUICK_LOGIN"])
+    except Exception:
+        pass
+    val = val or os.environ.get("DEMO_QUICK_LOGIN", "true")
+    return val.strip().lower() not in ("false", "0", "no", "off")
+
+
 def _iso(d: date) -> str:
     return d.isoformat()
 

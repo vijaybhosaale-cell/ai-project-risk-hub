@@ -17,6 +17,7 @@ IMPLEMENTED = {
         "Audit log of sign-ins, failed sign-ins and every important change (who, what, when).",
         "SMTP password read from a secret, never stored in the database.",
         "No automatic reassignment, deadline change, access grant or incident confirmation: a human decision is always required.",
+        "Demo convenience: one-click role access is available ONLY for the fictional NOVATECH demo workspace and is logged; disable it with DEMO_QUICK_LOGIN=false.",
     ],
     "fr": [
         "Mots de passe hachés avec PBKDF2-SHA256 salé (150 000 itérations) ; aucun mot de passe en clair.",
@@ -28,6 +29,7 @@ IMPLEMENTED = {
         "Journal d'audit des connexions, échecs et modifications importantes.",
         "Mot de passe SMTP lu depuis un secret, jamais stocké en base.",
         "Aucune réaffectation, modification d'échéance, ouverture d'accès ou confirmation d'incident automatique.",
+        "Confort de démo : l'accès en un clic par rôle existe UNIQUEMENT pour l'espace fictif NOVATECH et est journalisé ; désactivable avec DEMO_QUICK_LOGIN=false.",
     ],
 }
 GAPS = {
