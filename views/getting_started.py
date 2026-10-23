@@ -84,7 +84,7 @@ def render(ctx: dict) -> None:
             a, b = st.columns([4, 1.3])
             a.markdown(f'<div class="step"><div class="n">{i}</div><div><b>{html.escape(t(LABELS[page]))}</b><br>'
                        f'<span class="subtle">{html.escape(t(desc))}</span></div></div>', unsafe_allow_html=True)
-            b.button(t("Open") + " →", key=f"gs_{page}", on_click=_go, args=(page,), width="stretch")
+            b.button(t("Open →"), key=f"gs_{page}", on_click=_go, args=(page,), width="stretch")
             spoken.append(f"{i}. {t(LABELS[page])}: {t(desc)}")
         st.write("")
         intro = t("Welcome to the AI Project and Risk Intelligence Hub. Here is your suggested path.")
